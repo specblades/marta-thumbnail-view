@@ -102,7 +102,7 @@ behavior {
 
     table {
         defaults {
-            columns "extension:70,>size:80,modified:135"
+            columns "extension:53,>size:59,modified:99"
         }
     }
 }
@@ -130,7 +130,7 @@ keyBindings {
 
 - в `setup.actionBar` добавь `{id "com.csaturnus.marta.thumbnailviewer.open" title "View"}`;
 - в `keyBindings` добавь `"Cmd+2" "com.csaturnus.marta.thumbnailviewer.open"` и, если нужно, `"F3" "com.csaturnus.marta.thumbnailviewer.open"`;
-- в `behavior.table.defaults.columns` добавь `extension:70`, если нужна колонка `Extension`.
+- в `behavior.table.defaults.columns` добавь `extension:53`, если нужна колонка `Extension`.
 
 После изменения конфига перезапусти Marta:
 
@@ -174,7 +174,7 @@ git pull
 
 - action bar кнопку `com.csaturnus.marta.thumbnailviewer.open`;
 - key bindings `Cmd+2`/`F3`;
-- колонку `extension:70`, если она больше не нужна.
+- колонку `extension:53`, если она больше не нужна.
 
 ## Где хранятся настройки
 

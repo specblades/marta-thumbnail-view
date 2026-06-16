@@ -5,7 +5,7 @@ behavior {
 
     table {
         defaults {
-            columns "extension:70,>size:80,modified:135"
+            columns "extension:53,>size:59,modified:99"
         }
     }
 }
