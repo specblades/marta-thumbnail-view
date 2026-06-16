@@ -60,7 +60,7 @@ cd marta-thumbnail-view
 Скрипт:
 
 - скопирует плагин в `~/Library/Application Support/org.yanex.marta/Plugins/thumbnail-viewer`;
-- сделает backup предыдущей версии, если она уже была установлена;
+- сделает backup предыдущей версии в `~/Library/Application Support/org.yanex.marta/Plugin Backups`, если она уже была установлена;
 - соберет `libmartathumbs.so` из `thumbnail-viewer/martathumbs.m`;
 - снимет quarantine-атрибуты macOS с файлов плагина.
 

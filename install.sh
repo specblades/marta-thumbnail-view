@@ -6,6 +6,7 @@ PLUGIN_SRC="$SCRIPT_DIR/thumbnail-viewer"
 MARTA_SUPPORT_DIR="${MARTA_SUPPORT_DIR:-$HOME/Library/Application Support/org.yanex.marta}"
 PLUGIN_PARENT="$MARTA_SUPPORT_DIR/Plugins"
 PLUGIN_DIR="$PLUGIN_PARENT/thumbnail-viewer"
+BACKUP_PARENT="$MARTA_SUPPORT_DIR/Plugin Backups"
 
 if [[ ! -d "$PLUGIN_SRC" ]]; then
     echo "Cannot find plugin source: $PLUGIN_SRC" >&2
@@ -16,7 +17,8 @@ mkdir -p "$PLUGIN_PARENT"
 
 if [[ -e "$PLUGIN_DIR" ]]; then
     STAMP="$(date +%Y%m%d%H%M%S)"
-    BACKUP_DIR="$PLUGIN_DIR.backup.$STAMP"
+    BACKUP_DIR="$BACKUP_PARENT/thumbnail-viewer.backup.$STAMP"
+    mkdir -p "$BACKUP_PARENT"
     echo "Backing up existing plugin to:"
     echo "  $BACKUP_DIR"
     cp -a "$PLUGIN_DIR" "$BACKUP_DIR"
