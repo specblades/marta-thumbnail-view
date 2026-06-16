@@ -11,7 +11,7 @@ Thumbnail View для [Marta](https://marta.sh/): нативный Lua/Objective
 - Space открывает системный Quick Look preview.
 - Escape снимает выделение, не закрывая thumbnail view.
 - Превью через macOS `QuickLookThumbnailing`, включая изображения, PDF/текстовые превью, MP4 и другие форматы, которые умеет Finder.
-- Маленький слайдер размера thumbnail в строке статуса: 80-150%, шаг 10%, дефолт 80%.
+- Маленький слайдер размера thumbnail в строке статуса: 50-150%, шаг 10%, дефолт 80%.
 - Запоминание view mode отдельно для каждой папки.
 - Сортировка в thumbnail view по видимым колонкам `Name`, `Extension`, `Size`, `Modified`.
 - Опциональная колонка `Extension` для сортировки по типу/расширению файла в list view.

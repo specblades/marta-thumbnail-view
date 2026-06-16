@@ -8,17 +8,20 @@
 
 static NSMapTable<NSWindow *, MartaThumbnailOverlayController *> *activeControllers;
 static const CGFloat MartaThumbnailPercentBaseCellWidth = 156.0;
-static const CGFloat MartaThumbnailDefaultCellWidth = MartaThumbnailPercentBaseCellWidth * 0.80;
+static const CGFloat MartaThumbnailMinPercent = 0.50;
+static const CGFloat MartaThumbnailDefaultPercent = 0.80;
+static const CGFloat MartaThumbnailMaxPercent = 1.50;
+static const CGFloat MartaThumbnailDefaultCellWidth = MartaThumbnailPercentBaseCellWidth * MartaThumbnailDefaultPercent;
 static NSString * const MartaThumbnailCellWidthDefaultsKey = @"com.csaturnus.marta.thumbnailviewer.cellWidth.v2";
 static NSString * const MartaThumbnailFolderModesDefaultsKey = @"com.csaturnus.marta.thumbnailviewer.folderModes.v1";
-static CGFloat MartaThumbnailCurrentCellWidth = MartaThumbnailPercentBaseCellWidth * 0.80;
+static CGFloat MartaThumbnailCurrentCellWidth = MartaThumbnailDefaultCellWidth;
 
 static CGFloat ClampThumbnailCellWidth(CGFloat value) {
-    return MIN(MAX(value, MartaThumbnailPercentBaseCellWidth * 0.80), MartaThumbnailPercentBaseCellWidth * 1.50);
+    return MIN(MAX(value, MartaThumbnailPercentBaseCellWidth * MartaThumbnailMinPercent), MartaThumbnailPercentBaseCellWidth * MartaThumbnailMaxPercent);
 }
 
 static CGFloat ThumbnailCellHeightForWidth(CGFloat width) {
-    return MAX(150.0, floor(width * 1.16));
+    return MAX(120.0, floor(width * 1.16));
 }
 
 @interface MartaThumbItem : NSObject
@@ -1149,7 +1152,7 @@ static CGFloat ThumbnailCellHeightForWidth(CGFloat width) {
 
 - (void)sizeSliderChanged:(NSSlider *)sender {
     NSInteger percent = (NSInteger)llround(sender.doubleValue / 10.0) * 10;
-    percent = MAX(80, MIN(150, percent));
+    percent = MAX(50, MIN(150, percent));
     sender.doubleValue = percent;
 
     MartaThumbnailCurrentCellWidth = ClampThumbnailCellWidth(MartaThumbnailPercentBaseCellWidth * ((CGFloat)percent / 100.0));
@@ -1485,10 +1488,10 @@ static int showOverlay(lua_State *L) {
     sizeBar.layer.backgroundColor = NSColor.clearColor.CGColor;
 
     NSSlider *sizeSlider = [[NSSlider alloc] initWithFrame:NSZeroRect];
-    sizeSlider.minValue = 80.0;
+    sizeSlider.minValue = 50.0;
     sizeSlider.maxValue = 150.0;
     sizeSlider.doubleValue = llround((MartaThumbnailCurrentCellWidth / MartaThumbnailPercentBaseCellWidth) * 100.0 / 10.0) * 10.0;
-    sizeSlider.numberOfTickMarks = 8;
+    sizeSlider.numberOfTickMarks = 11;
     sizeSlider.allowsTickMarkValuesOnly = YES;
     sizeSlider.continuous = YES;
     sizeSlider.target = controller;
