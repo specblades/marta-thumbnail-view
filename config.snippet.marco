@@ -1,0 +1,29 @@
+behavior {
+    layout {
+        showActionBar true
+    }
+
+    table {
+        defaults {
+            columns "extension:70,>size:80,modified:135"
+        }
+    }
+}
+
+setup {
+    actionBar [
+        "core.open.with"
+        {id "com.csaturnus.marta.thumbnailviewer.open" title "View"}
+        "core.edit"
+        "core.copy"
+        "core.move"
+        "core.rename"
+        "core.new.directory"
+        "core.delete"
+    ]
+}
+
+keyBindings {
+    "F3" "com.csaturnus.marta.thumbnailviewer.open"
+    "Cmd+2" "com.csaturnus.marta.thumbnailviewer.open"
+}
