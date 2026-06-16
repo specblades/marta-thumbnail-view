@@ -12,6 +12,7 @@ static const CGFloat MartaThumbnailMinPercent = 0.50;
 static const CGFloat MartaThumbnailDefaultPercent = 0.80;
 static const CGFloat MartaThumbnailMaxPercent = 1.50;
 static const CGFloat MartaThumbnailDefaultCellWidth = MartaThumbnailPercentBaseCellWidth * MartaThumbnailDefaultPercent;
+static const CGFloat MartaThumbnailContentPadding = 8.0;
 static NSString * const MartaThumbnailCellWidthDefaultsKey = @"com.csaturnus.marta.thumbnailviewer.cellWidth.v2";
 static NSString * const MartaThumbnailFolderModesDefaultsKey = @"com.csaturnus.marta.thumbnailviewer.folderModes.v1";
 static CGFloat MartaThumbnailCurrentCellWidth = MartaThumbnailDefaultCellWidth;
@@ -21,7 +22,7 @@ static CGFloat ClampThumbnailCellWidth(CGFloat value) {
 }
 
 static CGFloat ThumbnailCellHeightForWidth(CGFloat width) {
-    return MAX(120.0, floor(width * 1.16));
+    return MAX(114.0, floor(width + 36.0));
 }
 
 @interface MartaThumbItem : NSObject
@@ -243,7 +244,7 @@ static CGFloat ThumbnailCellHeightForWidth(CGFloat width) {
         _failedThumbnailKeys = [NSMutableSet set];
         _cellWidth = ClampThumbnailCellWidth(MartaThumbnailCurrentCellWidth);
         _cellHeight = ThumbnailCellHeightForWidth(_cellWidth);
-        _padding = 14;
+        _padding = MartaThumbnailContentPadding;
         _anchorVisualIndex = [self initialCurrentVisualIndex];
         _mouseDownVisualIndex = -1;
         self.wantsLayer = YES;
@@ -433,7 +434,7 @@ static CGFloat ThumbnailCellHeightForWidth(CGFloat width) {
     NSInteger columns = [self columnsForWidth:self.bounds.size.width];
     NSInteger row = index / columns;
     NSInteger column = index % columns;
-    return NSMakeRect(column * self.cellWidth + 6, row * self.cellHeight + 6, self.cellWidth - 12, self.cellHeight - 10);
+    return NSMakeRect(column * self.cellWidth + 4, row * self.cellHeight + 4, self.cellWidth - 8, self.cellHeight - 8);
 }
 
 - (NSInteger)visualIndexAtPoint:(NSPoint)point {
@@ -630,7 +631,7 @@ static CGFloat ThumbnailCellHeightForWidth(CGFloat width) {
         NSImage *thumb = [self thumbnailForItem:item maxSize:thumbMax];
         if (thumb != nil) {
             CGFloat imageX = NSMidX(tileRect) - thumb.size.width / 2;
-            CGFloat imageY = tileRect.origin.y + 12 + (thumbMax - thumb.size.height) / 2;
+            CGFloat imageY = tileRect.origin.y + 8 + (thumbMax - thumb.size.height) / 2;
             [thumb drawInRect:NSMakeRect(imageX, imageY, thumb.size.width, thumb.size.height)];
         }
 
@@ -639,9 +640,9 @@ static CGFloat ThumbnailCellHeightForWidth(CGFloat width) {
             NSForegroundColorAttributeName: item.selected ? NSColor.selectedControlTextColor : NSColor.labelColor,
             NSParagraphStyleAttributeName: center
         };
-        NSRect textRect = NSMakeRect(tileRect.origin.x + 8,
-                                     tileRect.origin.y + thumbMax + 20,
-                                     tileRect.size.width - 16,
+        NSRect textRect = NSMakeRect(tileRect.origin.x + 5,
+                                     tileRect.origin.y + thumbMax + 16,
+                                     tileRect.size.width - 10,
                                      34);
         [item.name drawInRect:textRect withAttributes:textAttributes];
     }
