@@ -7,6 +7,7 @@
 @class MartaThumbnailOverlayController;
 
 static NSMapTable<NSWindow *, MartaThumbnailOverlayController *> *activeControllers;
+static NSView *FindHeaderViewForScrollView(NSScrollView *scrollView);
 static const CGFloat MartaThumbnailPercentBaseCellWidth = 156.0;
 static const CGFloat MartaThumbnailMinPercent = 0.50;
 static const CGFloat MartaThumbnailDefaultPercent = 0.80;
@@ -945,6 +946,19 @@ static CGFloat ThumbnailCellHeightForWidth(CGFloat width) {
             }
             return @"name";
         };
+        NSString *(^sortColumnFromRatio)(CGFloat) = ^NSString *(CGFloat ratio) {
+            ratio = MAX(0.0, MIN(1.0, ratio));
+            if (ratio >= 0.80) {
+                return @"modified";
+            }
+            if (ratio >= 0.68) {
+                return @"size";
+            }
+            if (ratio >= 0.58) {
+                return @"extension";
+            }
+            return @"name";
+        };
 
         NSTableHeaderView *headerView = controller.targetTable.headerView;
         if (headerView != nil) {
@@ -956,29 +970,29 @@ static CGFloat ThumbnailCellHeightForWidth(CGFloat width) {
             }
         }
         if (!clickedHeader && controller.targetScrollView != nil) {
-            NSRect bodyRect = [controller.targetScrollView convertRect:controller.targetScrollView.bounds toView:nil];
-            NSRect headerBand = NSMakeRect(NSMinX(bodyRect), NSMaxY(bodyRect), NSWidth(bodyRect), 40.0);
-            clickedHeader = NSPointInRect(event.locationInWindow, headerBand);
-            if (clickedHeader) {
-                CGFloat x = event.locationInWindow.x - NSMinX(bodyRect);
-                CGFloat columnX = 0;
-                for (NSTableColumn *column in controller.targetTable.tableColumns) {
-                    columnX += column.width;
-                    if (x <= columnX) {
-                        sortColumn = sortColumnFromTableColumn(column);
-                        break;
-                    }
+            NSView *martaHeaderView = FindHeaderViewForScrollView(controller.targetScrollView);
+            if (martaHeaderView != nil) {
+                NSPoint headerPoint = [martaHeaderView convertPoint:event.locationInWindow fromView:nil];
+                clickedHeader = NSPointInRect(headerPoint, martaHeaderView.bounds);
+                if (clickedHeader && NSWidth(martaHeaderView.bounds) > 0) {
+                    sortColumn = sortColumnFromRatio(headerPoint.x / NSWidth(martaHeaderView.bounds));
                 }
-                if (sortColumn == nil && NSWidth(bodyRect) > 0) {
-                    CGFloat ratio = MAX(0.0, MIN(1.0, x / NSWidth(bodyRect)));
-                    if (ratio >= 0.80) {
-                        sortColumn = @"modified";
-                    } else if (ratio >= 0.68) {
-                        sortColumn = @"size";
-                    } else if (ratio >= 0.58) {
-                        sortColumn = @"extension";
-                    } else {
-                        sortColumn = @"name";
+            } else {
+                NSRect bodyRect = [controller.targetScrollView convertRect:controller.targetScrollView.bounds toView:nil];
+                NSRect headerBand = NSMakeRect(NSMinX(bodyRect), NSMaxY(bodyRect), NSWidth(bodyRect), 30.0);
+                clickedHeader = NSPointInRect(event.locationInWindow, headerBand);
+                if (clickedHeader) {
+                    CGFloat x = event.locationInWindow.x - NSMinX(bodyRect);
+                    CGFloat columnX = 0;
+                    for (NSTableColumn *column in controller.targetTable.tableColumns) {
+                        columnX += column.width;
+                        if (x <= columnX) {
+                            sortColumn = sortColumnFromTableColumn(column);
+                            break;
+                        }
+                    }
+                    if (sortColumn == nil && NSWidth(bodyRect) > 0) {
+                        sortColumn = sortColumnFromRatio(x / NSWidth(bodyRect));
                     }
                 }
             }
@@ -1178,6 +1192,68 @@ static void EnsureActiveControllers(void) {
     if (activeControllers == nil) {
         activeControllers = [NSMapTable weakToStrongObjectsMapTable];
     }
+}
+
+static void CollectHeaderViews(NSView *view, NSMutableArray<NSView *> *headers) {
+    NSString *className = NSStringFromClass(view.class);
+    if ([className containsString:@"TableHeaderView"]) {
+        [headers addObject:view];
+    }
+    for (NSView *subview in view.subviews) {
+        CollectHeaderViews(subview, headers);
+    }
+}
+
+static CGFloat RectHorizontalOverlap(NSRect left, NSRect right) {
+    return MAX(0.0, MIN(NSMaxX(left), NSMaxX(right)) - MAX(NSMinX(left), NSMinX(right)));
+}
+
+static NSView *FindHeaderViewForScrollView(NSScrollView *scrollView) {
+    if (scrollView == nil) {
+        return nil;
+    }
+
+    NSView *root = scrollView.superview ?: scrollView.window.contentView;
+    if (root == nil) {
+        return nil;
+    }
+
+    NSMutableArray<NSView *> *headers = [NSMutableArray array];
+    CollectHeaderViews(root, headers);
+    if (headers.count == 0) {
+        return nil;
+    }
+
+    NSRect scrollRect = [scrollView convertRect:scrollView.bounds toView:nil];
+    NSView *bestHeader = nil;
+    CGFloat bestScore = CGFLOAT_MAX;
+    for (NSView *header in headers) {
+        NSRect headerRect = [header convertRect:header.bounds toView:nil];
+        if (NSWidth(headerRect) < 120.0 || NSHeight(headerRect) < 12.0 || NSHeight(headerRect) > 60.0) {
+            continue;
+        }
+
+        CGFloat overlap = RectHorizontalOverlap(headerRect, scrollRect);
+        CGFloat requiredOverlap = MIN(NSWidth(headerRect), NSWidth(scrollRect)) * 0.5;
+        if (overlap < requiredOverlap) {
+            continue;
+        }
+
+        CGFloat verticalGap = fabs(NSMinY(headerRect) - NSMaxY(scrollRect));
+        if (verticalGap > 8.0) {
+            continue;
+        }
+
+        CGFloat score = verticalGap
+            + fabs(NSMinX(headerRect) - NSMinX(scrollRect)) * 0.1
+            + fabs(NSWidth(headerRect) - NSWidth(scrollRect)) * 0.01;
+        if (score < bestScore) {
+            bestScore = score;
+            bestHeader = header;
+        }
+    }
+
+    return bestHeader;
 }
 
 static void CollectTableViews(NSView *view, NSMutableArray<NSTableView *> *tables) {
