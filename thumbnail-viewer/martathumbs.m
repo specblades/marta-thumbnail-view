@@ -196,6 +196,8 @@ static CGFloat ThumbnailCellHeightForWidth(CGFloat width) {
 @property(nonatomic) NSInteger anchorVisualIndex;
 @property(nonatomic) NSInteger mouseDownVisualIndex;
 @property(nonatomic) NSPoint mouseDownPoint;
+@property(nonatomic, copy) NSString *pendingMouseUpSelectionMode;
+@property(nonatomic) BOOL mouseDragDidStart;
 @property(nonatomic, copy) NSString *sortColumn;
 @property(nonatomic) BOOL sortAscending;
 - (void)applyCellWidth:(CGFloat)cellWidth;
@@ -248,6 +250,7 @@ static CGFloat ThumbnailCellHeightForWidth(CGFloat width) {
         _padding = MartaThumbnailContentPadding;
         _anchorVisualIndex = [self initialCurrentVisualIndex];
         _mouseDownVisualIndex = -1;
+        _mouseDragDidStart = NO;
         self.wantsLayer = YES;
         self.layer.backgroundColor = NSColor.windowBackgroundColor.CGColor;
         [self registerForDraggedTypes:@[NSPasteboardTypeFileURL]];
@@ -756,6 +759,8 @@ static CGFloat ThumbnailCellHeightForWidth(CGFloat width) {
     NSInteger visualIndex = [self visualIndexAtPoint:point];
     self.mouseDownPoint = point;
     self.mouseDownVisualIndex = visualIndex;
+    self.pendingMouseUpSelectionMode = nil;
+    self.mouseDragDidStart = NO;
 
     if (visualIndex < 0) {
         return;
@@ -764,11 +769,36 @@ static CGFloat ThumbnailCellHeightForWidth(CGFloat width) {
     BOOL extend = (event.modifierFlags & NSEventModifierFlagShift) != 0;
     BOOL toggle = (event.modifierFlags & NSEventModifierFlagCommand) != 0;
     NSString *mode = toggle ? @"toggle" : (extend ? @"extend" : @"single");
+
+    if (!extend && self.items[visualIndex].selected && event.clickCount < 2) {
+        self.pendingMouseUpSelectionMode = mode;
+        for (MartaThumbItem *item in self.items) {
+            item.current = NO;
+        }
+        self.items[visualIndex].current = YES;
+        self.needsDisplay = YES;
+        return;
+    }
+
     [self setSelectionToVisualIndex:visualIndex mode:mode notify:YES];
 
     if (event.clickCount >= 2) {
         [self.callbacks callOpenIndex:self.items[visualIndex].modelIndex];
     }
+}
+
+- (void)mouseUp:(NSEvent *)event {
+    if (!self.mouseDragDidStart && self.pendingMouseUpSelectionMode != nil) {
+        NSPoint point = [self convertPoint:event.locationInWindow fromView:nil];
+        NSInteger visualIndex = [self visualIndexAtPoint:point];
+        if (visualIndex == self.mouseDownVisualIndex) {
+            [self setSelectionToVisualIndex:visualIndex mode:self.pendingMouseUpSelectionMode notify:YES];
+        }
+    }
+
+    self.pendingMouseUpSelectionMode = nil;
+    self.mouseDownVisualIndex = -1;
+    self.mouseDragDidStart = NO;
 }
 
 - (void)rightMouseDown:(NSEvent *)event {
@@ -808,6 +838,8 @@ static CGFloat ThumbnailCellHeightForWidth(CGFloat width) {
     }
 
     if (dragItems.count > 0) {
+        self.mouseDragDidStart = YES;
+        self.pendingMouseUpSelectionMode = nil;
         [self beginDraggingSessionWithItems:dragItems event:event source:self];
     }
     self.mouseDownVisualIndex = -1;
